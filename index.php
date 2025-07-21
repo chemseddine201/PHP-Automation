@@ -1,5 +1,5 @@
 <?php
-require_once 'autoload.php';
+require_once __DIR__ . '/autoload.php';
 
 use Dotenv\Dotenv;
 use Services\AutomationService;
@@ -22,7 +22,7 @@ $host = $_ENV['HOST_URL'];
 $url = $_ENV['MAIN_URL'];
 $parallel = $_ENV['PARALLEL'] === 'true';
 
-$driver = RemoteWebDriver::create($host, DesiredCapabilities::chrome(), 60000, 60000);
+$driver = RemoteWebDriver::create($host, DesiredCapabilities::chrome(), 2 * 60000, 2 * 60000);
 //
 
 $jobs = [
