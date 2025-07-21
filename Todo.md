@@ -1,0 +1,3 @@
+- implement multi instance test at once
+- implement parallel actions processing
+- apply unit test if needed
