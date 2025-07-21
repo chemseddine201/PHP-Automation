@@ -1,5 +1,6 @@
 <?php
 
+namespace Pages;
 
 use Services\{BasePage, WorkflowBuilder, WorkflowResult};
 

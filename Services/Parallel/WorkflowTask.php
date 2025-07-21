@@ -11,11 +11,12 @@ use Services\AutomationService;
 
 final class WorkflowTask implements Task
 {
+    private string $hub = 'http://localhost:4444/wd/hub';
     public function __construct(private $callable) {}
 
     public function run(Channel $channel, Cancellation $cancellation): mixed
     {
-        $host = $_ENV['SELENIUM_HUB_URL'] ?? 'http://localhost:4444/wd/hub';
+        $host = $_ENV['SELENIUM_HUB_URL'] ?? $this->hub;
         $capabilities = DesiredCapabilities::chrome();
 
         $driver = RemoteWebDriver::create($host, $capabilities);
