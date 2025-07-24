@@ -17,9 +17,6 @@ class CustomXHRHandler implements XHRInterceptorInterface
 
         // Example: Modify API requests
         if (strpos($url, '/api/') !== false) {
-            // Add custom headers
-            $requestData['headers']['X-Custom-Header'] = 'Modified by Interceptor';
-
             // Modify request body for POST requests
             if ($requestData['method'] === 'POST' && $requestData['body']) {
                 $body = json_decode($requestData['body'], true);
