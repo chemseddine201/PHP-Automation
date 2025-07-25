@@ -32,8 +32,13 @@ $chromeOptions = new ChromeOptions();
 $chromeOptions->addArguments(['--no-sandbox', '--disable-dev-shm-usage']); //'--headless','--no-sandbox', '--disable-dev-shm-usage'
 $capabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
 
-// Create custom handler
-$customHandler = new CustomXHRHandler();
+//TODO: play with interceptors to break requests
+$customHandler = (new CustomXHRHandler)
+    ->addBreaker(
+        fn(array $req) =>
+        $req['method'] === 'POST' &&
+            strpos($req['url'], '/api/company/login') !== false
+    );
 
 // Add modification rules to default handler
 $defaultHandler = new DefaultXHRHandler();
@@ -76,7 +81,9 @@ $xhrResponses = $driver->processCompletedXHRRequests();
 $fetchData = $driver->processFetchRequests();
 
 print_r($xhrRequests);
-
+print(PHP_EOL . "==========================" . PHP_EOL);
+print_r($xhrResponses);
+print(PHP_EOL . "==========================" . PHP_EOL);
 
 echo "Processed " . count($xhrRequests) . " XHR requests\n";
 echo "Processed " . count($xhrResponses) . " XHR responses\n";

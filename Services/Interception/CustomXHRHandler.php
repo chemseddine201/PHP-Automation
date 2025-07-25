@@ -3,26 +3,54 @@
 namespace Services\Interception;
 
 /**
- * Example Custom XHR Handler
- * Demonstrates advanced request modification
+ * Custom XHR Handler with request-breaking support
  */
 class CustomXHRHandler implements XHRInterceptorInterface
 {
-    private array $requestLog = [];
-    private array $responseLog = [];
+    private array $requestLog   = [];
+    private array $responseLog  = [];
+    /** @var callable[] */
+    private array $breakRules   = [];
+
+    /* ------------------------------------------------------------
+     *  Public API
+     * ------------------------------------------------------------ */
+
+    /**
+     * Register a breaker rule.
+     * Signature: function(array $requestData): bool
+     * Return true ⇒ break the request.
+     */
+    public function addBreaker(callable $rule): self
+    {
+        $this->breakRules[] = $rule;
+        return $this;
+    }
+
+    /* ------------------------------------------------------------
+     *  XHRInterceptorInterface
+     * ------------------------------------------------------------ */
 
     public function beforeRequest(array $requestData): array
     {
-        $url = $requestData['url'];
+        // 1. Run every registered breaker
+        foreach ($this->breakRules as $rule) {
+            if ($rule($requestData) === true) {
+                $requestData['_break'] = true;   // mark as broken
+                break;
+            }
+        }
 
-        // Example: Modify API requests
-        if (strpos($url, '/api/') !== false) {
-            // Modify request body for POST requests
-            if ($requestData['method'] === 'POST' && $requestData['body']) {
+        // 2. Normal modification if NOT broken
+        if (!($requestData['_break'] ?? false)) {
+            if (
+                strpos($requestData['url'], 'api.stg.bugs-tracker.com/') !== false &&
+                $requestData['body']
+            ) {
                 $body = json_decode($requestData['body'], true);
                 if ($body) {
-                    $body['intercepted'] = true;
-                    $body['timestamp'] = time();
+                    $body['intercepted'] = 1;
+                    $body['timestamp']   = time();
                     $requestData['body'] = json_encode($body);
                 }
             }
@@ -34,37 +62,23 @@ class CustomXHRHandler implements XHRInterceptorInterface
 
     public function afterResponse(array $responseData): array
     {
-        $url = $responseData['url'];
-
-        // Example: Log specific response patterns
-        if (strpos($url, '/api/user') !== false && $responseData['status'] === 200) {
-            echo "[API] User data retrieved successfully\n";
-        }
-
-        // Example: Mock error responses for testing
-        if (strpos($url, '/api/test-error') !== false) {
-            $responseData['status'] = 500;
-            $responseData['statusText'] = 'Mocked Error';
-            $responseData['responseText'] = json_encode(['error' => 'Simulated error for testing']);
-        }
-
         $this->responseLog[] = $responseData;
         return $responseData;
     }
 
     public function shouldIntercept(string $url): bool
     {
-        // Only intercept API calls and specific domains
-        return strpos($url, '/api/') !== false ||
-            strpos($url, 'example.com') !== false ||
-            strpos($url, 'test-domain.com') !== false;
+        return strpos($url, 'api.stg.bugs-tracker.com/api/') !== false;
     }
+
+    /* ------------------------------------------------------------
+     *  Helpers
+     * ------------------------------------------------------------ */
 
     public function getRequestLog(): array
     {
         return $this->requestLog;
     }
-
     public function getResponseLog(): array
     {
         return $this->responseLog;
